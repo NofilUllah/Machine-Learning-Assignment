@@ -1,0 +1,77 @@
+Assingment #2
+
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import SVC
+from sklearn.ensemble import VotingClassifier
+
+# Load data from CSV file
+data = pd.read_csv('/content/train_without_special_characters_and_numbers.csv')  # Replace 'your_data.csv' with the path to your CSV file
+
+# Check the column names in your DataFrame
+print(data.columns)
+
+# Extract text features and labels
+X = data['Title'] + ' ' + data['FeedBack']  # Concatenate 'Title' and 'FeedBack' columns
+y = data['Polarity']
+
+# Drop rows with missing values
+data.dropna(subset=['Title', 'FeedBack'], inplace=True)
+X = data['Title'] + ' ' + data['FeedBack']
+y = data['Polarity']
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Preprocess text data using TF-IDF vectorization
+tfidf_vectorizer = TfidfVectorizer(max_features=5000)  # You can adjust max_features as needed
+X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+X_test_tfidf = tfidf_vectorizer.transform(X_test)
+
+# Initialize classifiers
+logistic_regression = LogisticRegression()
+decision_tree = DecisionTreeClassifier()
+knn = KNeighborsClassifier()
+naive_bayes = MultinomialNB()
+svm = SVC()
+ensemble = VotingClassifier(estimators=[
+    ('lr', logistic_regression),
+    ('dt', decision_tree),
+    ('knn', knn),
+    ('nb', naive_bayes),
+    ('svm', svm)
+], voting='hard')
+
+classifiers = [logistic_regression, decision_tree, knn, naive_bayes, svm, ensemble]
+classifier_names = ['Logistic Regression', 'Decision Tree', 'kNN', 'Naive Bayes', 'SVM', 'Ensemble']
+
+# Train and evaluate classifiers
+for classifier, name in zip(classifiers, classifier_names):
+    classifier.fit(X_train_tfidf, y_train)
+    y_pred = classifier.predict(X_test_tfidf)
+
+    # Calculate evaluation metrics
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average='weighted')
+    recall = recall_score(y_test, y_pred, average='weighted')
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    confusion_mat = confusion_matrix(y_test, y_pred)
+
+    # Print results
+    print(f"Classifier: {name}")
+    print(f"Accuracy: {accuracy}")
+    print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"F1-Score: {f1}")
+    print(f"Confusion Matrix:\n{confusion_mat}\n")
+
+
+
+
